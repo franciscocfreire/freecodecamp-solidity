@@ -11,10 +11,15 @@ contract FundMe {
 
     uint256 public minimumUsd = 50 * 1e18;
 
+    address[] public funders;
+    mapping(address => uint256) public adressToAmountFunded;
+
     function fund() public payable {
         // Wanted to be able to set a minimum fund amount in USD
         // 1. How do we send ETH to this contract?
         require(getConversionRate(msg.value) >= minimumUsd, "Didn't send enogh"); // 1e18 == 1 * 10 ** 18 == 1000000000000000000 WEI == 1 ETH
+        funders.push(msg.sender);    
+        adressToAmountFunded[msg.sender] = msg.value;
     }
 
     function getPrice() public view returns(uint256){
