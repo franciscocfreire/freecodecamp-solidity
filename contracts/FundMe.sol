@@ -6,25 +6,34 @@ import "./PriceConverter.sol";
 // Withdraw funds
 // Set a minimum funding value in USD
 
+// 859,721
+// 840,185 - constant
+// 816,726 - immutabel
+// 791,836 - revert call
+// 796,979 - add receive and fallback special function
+
+error NotOwner();
 contract FundMe {
 
     using PriceConverter for uint256;
 
-    uint256 public minimumUsd = 50 * 1e18;
+    // 21,415
+    uint256 public constant MINIMUM_USD = 50 * 1e18;
 
     address[] public funders;
     mapping(address => uint256) public adressToAmountFunded;
 
-    address public owner;
+    // 21,508
+    address public immutable i_owner;
 
     constructor(){
-        owner = msg.sender;
+        i_owner = msg.sender;
     }
 
     function fund() public payable {
         // Wanted to be able to set a minimum fund amount in USD
         // 1. How do we send ETH to this contract?
-        require(msg.value.getConversionRate() >= minimumUsd, "Didn't send enogh"); // 1e18 == 1 * 10 ** 18 == 1000000000000000000 WEI == 1 ETH
+        require(msg.value.getConversionRate() >= MINIMUM_USD, "Didn't send enogh"); // 1e18 == 1 * 10 ** 18 == 1000000000000000000 WEI == 1 ETH
         funders.push(msg.sender);    
         adressToAmountFunded[msg.sender] += msg.value;
     }
@@ -63,7 +72,17 @@ contract FundMe {
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner, "Sender is not owner!");
+        if(msg.sender == i_owner){
+            revert NotOwner();
+        }
         _; // do the rest of the code
+    }
+
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
     }
 }
